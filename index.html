@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>PBO Dynamax Helper</title>
 
-<!-- PapaParse (robustes CSV parsing) -->
+<!-- PapaParse for robust CSV parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 <style>
@@ -15,124 +15,139 @@
   --btn-bg:#F0F0F0; --btn-text:#000;
 }
 *{box-sizing:border-box}
-body{font-family:Inter, Arial, sans-serif;margin:0;background:var(--bg-light);color:#fff;min-height:100vh}
+body{font-family:Inter,system-ui,Arial,sans-serif;margin:0;background:var(--bg-light);color:#fff;min-height:100vh}
 .dark-mode{background:var(--bg-dark);color:#fff}
 .container{max-width:1100px;margin:72px auto;padding:20px}
 .header{display:flex;align-items:center;gap:12px;justify-content:center}
 h1{margin:0 0 14px 0;font-size:1.4rem;text-align:center;color:#fff}
 .toggle-container{position:fixed;top:14px;right:18px;z-index:1200}
-.toggle-btn{background:var(--btn-bg);color:var(--btn-text);border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+.toggle-btn{background:var(--btn-bg);color:var(--btn-text);border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
 .dark-mode .toggle-btn{background:#222;color:#fff}
+
+/* Loading screen */
+.loading-screen{height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg-light);position:fixed;inset:0;z-index:2000}
+.dark-mode .loading-screen{background:var(--bg-dark)}
+.load-box{background:var(--card-light);padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.25);text-align:center}
+.dark-mode .load-box{background:var(--card-dark)}
+.load-img{width:180px;height:180px;object-fit:cover;border-radius:12px;display:block;margin:6px auto}
+.load-btn{padding:10px 18px;border-radius:10px;border:none;background:var(--btn-bg);color:var(--btn-text);cursor:pointer;font-weight:700}
+.progress{margin-top:12px;font-size:0.95rem;color:rgba(255,255,255,0.9)}
+
+/* cards */
 .card{background:var(--card-light);padding:16px;border-radius:12px;margin-bottom:18px}
 .dark-mode .card{background:var(--card-dark)}
 label{display:block;margin-bottom:6px;font-size:0.95rem}
-select,input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);margin-bottom:8px}
+select,input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);margin-bottom:8px;background:transparent;color:inherit}
 .row{display:flex;gap:12px}
 .row>div{flex:1}
-.small-btn{padding:8px 12px;border-radius:8px;border:none;background:var(--btn-bg);color:var(--btn-text);cursor:pointer}
+.small-btn{padding:8px 12px;border-radius:8px;border:none;background:var(--btn-bg);color:var(--btn-text);cursor:pointer;font-weight:600}
 .small-btn:disabled{opacity:0.5;cursor:not-allowed}
+.note{font-size:0.9rem;color:rgba(255,255,255,0.9);margin-top:8px}
+
+/* table wrapper */
 .table-wrap{overflow:auto;margin-top:10px;background:#fff;color:#000;border-radius:8px;padding:8px}
 .dark-mode .table-wrap{background:#071418;color:#fff}
 table{border-collapse:collapse;width:100%}
-th,td{padding:8px;border-bottom:1px solid rgba(0,0,0,0.08);text-align:left}
-.note{font-size:0.85rem;color:rgba(255,255,255,0.8);margin-top:6px}
-.loading-screen{height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg-light);position:fixed;inset:0;z-index:2000}
-.dark-mode .loading-screen{background:var(--bg-dark)}
-.load-box{background:var(--card-light);padding:20px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.2);text-align:center}
-.dark-mode .load-box{background:var(--card-dark)}
-.load-btn{padding:10px 18px;border-radius:10px;border:none;background:var(--btn-bg);color:var(--btn-text);cursor:pointer;font-weight:600}
-.progress{margin-top:12px;font-size:0.95rem}
-.footer{margin-top:30px;text-align:center;color:rgba(255,255,255,0.7);font-weight:600}
+th,td{padding:8px;border-bottom:1px solid rgba(0,0,0,0.08);text-align:left;vertical-align:top}
+th{background:rgba(255,255,255,0.12);font-weight:700}
+
+/* preserve content formatting */
+.prewrap{white-space:pre-wrap;word-break:break-word}
 
 /* responsive */
-@media (max-width:720px){.row{flex-direction:column}}
+@media (max-width:760px){.row{flex-direction:column}}
+.footer{margin-top:30px;text-align:center;color:rgba(255,255,255,0.8);font-weight:600}
 </style>
 </head>
 <body>
-  <!-- Toggle -->
-  <div class="toggle-container">
-    <button id="toggleMode" class="toggle-btn">🌙 Dark Mode</button>
+
+<!-- Toggle -->
+<div class="toggle-container">
+  <button id="toggleMode" class="toggle-btn">🌙 Dark Mode</button>
+</div>
+
+<!-- Loading screen -->
+<div id="loadingScreen" class="loading-screen">
+  <div class="load-box">
+    <h2>PBO Dynamax Helper</h2>
+    <!-- your usual image -->
+    <img class="load-img" src="https://i.imgur.com/XZcfQzw.png" alt="CloudNine">
+    <p style="margin:8px 0 12px 0">Click to load data from the published sheets (CSV)</p>
+    <button id="startLoad" class="load-btn">Load Data</button>
+    <div id="loadProgress" class="progress" style="display:none"></div>
+    <div style="font-size:0.85rem;margin-top:8px;color:rgba(255,255,255,0.8)">Sheets must be published and publicly accessible.</div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" class="container" style="display:none">
+  <div class="header"><h1>PBO Dynamax Helper</h1></div>
+
+  <!-- Card 1: Dynamax Info -->
+  <div class="card" id="card-info">
+    <h3>Dynamax Info</h3>
+    <label>Type (column A)</label>
+    <select id="infoTypeSelect"><option value="">Select Type</option></select>
+    <div style="margin-top:8px">
+      <button id="infoReset" class="small-btn">Reset</button>
+    </div>
+    <div id="infoResult" class="note prewrap" style="margin-top:10px"></div>
   </div>
 
-  <!-- Loading screen -->
-  <div id="loadingScreen" class="loading-screen">
-    <div class="load-box">
-      <h2>PBO Dynamax Helper</h2>
-      <p style="margin:8px 0 12px 0">Load required sheets</p>
-      <button id="startLoad" class="load-btn">Load Data</button>
-      <div id="loadProgress" class="progress" style="display:none">Loading…</div>
-      <div style="font-size:0.85rem;margin-top:8px;color:rgba(255,255,255,0.8)">Sheets will be fetched as CSV (public / published required).</div>
+  <!-- Card 2: Dynamax Database -->
+  <div class="card" id="card-db">
+    <h3>Dynamax Database</h3>
+    <label>Group (column A)</label>
+    <select id="dbGroupSelect"><option value="">Select Group</option></select>
+    <div style="margin-top:8px">
+      <button id="dbReset" class="small-btn">Reset</button>
+    </div>
+    <div id="dbResult" class="table-wrap" style="display:none"></div>
+  </div>
+
+  <!-- Card 3: Type Effectiveness Checker -->
+  <div class="card" id="card-type">
+    <h3>Type Effectiveness Checker</h3>
+
+    <div style="margin-bottom:10px">
+      <label>Raid Type(s) — choose up to 2 (defender)</label>
+      <div class="row">
+        <div><select id="raidType1"><option value="">(none)</option></select></div>
+        <div><select id="raidType2"><option value="">(none)</option></select></div>
+      </div>
+      <div style="margin-top:8px"><button id="findAttackers" class="small-btn">Find Attackers (≥2×)</button> <button id="resetRaid" class="small-btn">Reset</button></div>
+      <div id="attackCandidates" class="note" style="margin-top:8px"></div>
+    </div>
+
+    <hr style="border:none;height:10px">
+
+    <div style="margin-top:10px">
+      <label>Movepool Types — choose up to 4 (attack types)</label>
+      <div class="row">
+        <div><select id="move1"><option value="">(none)</option></select></div>
+        <div><select id="move2"><option value="">(none)</option></select></div>
+        <div><select id="move3"><option value="">(none)</option></select></div>
+        <div><select id="move4"><option value="">(none)</option></select></div>
+      </div>
+      <div style="margin-top:8px"><button id="evaluateVuln" class="small-btn">Evaluate Vulnerability</button> <button id="resetMoves" class="small-btn">Reset</button></div>
+      <div id="vulnResult" class="table-wrap" style="display:none;margin-top:10px"></div>
     </div>
   </div>
 
-  <!-- Main app -->
-  <div id="app" class="container" style="display:none">
-    <div class="header"><h1>PBO Dynamax Helper</h1></div>
-
-    <!-- Card 1: Dynamax Info -->
-    <div class="card" id="card-info">
-      <h3>Dynamax Info</h3>
-      <label>Type (from sheet column A)</label>
-      <select id="infoTypeSelect"><option value="">Select Type</option></select>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button id="infoReset" class="small-btn">Reset</button>
-      </div>
-      <div id="infoResult" class="note"></div>
-    </div>
-
-    <!-- Card 2: Dynamax Database -->
-    <div class="card" id="card-db">
-      <h3>Dynamax Database</h3>
-      <label>Group (from sheet column A)</label>
-      <select id="dbGroupSelect"><option value="">Select Group</option></select>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button id="dbReset" class="small-btn">Reset</button>
-      </div>
-      <div id="dbResult" class="table-wrap" style="display:none"></div>
-    </div>
-
-    <!-- Card 3: Type Check -->
-    <div class="card" id="card-typecheck">
-      <h3>Type Check</h3>
-
-      <div style="margin-bottom:8px">
-        <label>Defensive - choose up to 2 types</label>
-        <div class="row">
-          <div><select id="defType1"><option value="">(none)</option></select></div>
-          <div><select id="defType2"><option value="">(none)</option></select></div>
-        </div>
-        <div style="margin-top:8px"><button id="defFindBtn" class="small-btn">Find Candidate Types</button> <button id="defReset" class="small-btn">Reset</button></div>
-        <div id="candidates" class="note" style="margin-top:8px"></div>
-      </div>
-
-      <hr style="border:none;height:8px">
-
-      <div style="margin-top:8px">
-        <label>Attack - choose up to 4 types</label>
-        <div class="row">
-          <div><select id="atk1"><option value="">(none)</option></select></div>
-          <div><select id="atk2"><option value="">(none)</option></select></div>
-          <div><select id="atk3"><option value="">(none)</option></select></div>
-          <div><select id="atk4"><option value="">(none)</option></select></div>
-        </div>
-        <div style="margin-top:8px"><button id="atkShowBtn" class="small-btn">Show</button> <button id="atkReset" class="small-btn">Reset</button></div>
-        <div id="atkResult" class="table-wrap" style="display:none;margin-top:10px"></div>
-      </div>
-    </div>
-
-    <div class="footer">@CloudNine</div>
-  </div>
+  <div class="footer">@CloudNine</div>
+</div>
 
 <script>
-/* ---------- Config: sheet URLs ---------- */
+/* ---------- Sheet URLs ---------- */
 const SHEET_INFO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRKBJf3BXL7kqLIu8WAZCiFIBqNTMVvWCmkRA2kVoC30QskuIRkxwUKJJnrHKh2Y8I18iZ0p068wRD2/pub?output=csv";
 const SHEET_DB   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGq_ta_VKuhpNif51aoWSm2XKE04CHREcDqGObDZnBQ0kK3Yo-_Bz7i7u1oP1Xv9pRm0-xN7dDgyiT/pub?output=csv";
 const SHEET_TYPES= "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUYm_GBIYmou5lzjHIeXmz9GlP0d4_z3g6Jxrpof_DvIBFdOh8bL4dNF8v4T2Vn5sseu8zOhRzP74O/pub?output=csv";
 
 /* ---------- state ---------- */
-let infoData = [];   // rows objects from sheet1 (header aware)
-let dbData = [];     // sheet2
-let typesTable = { header: [], rows: [] }; // sheet3
+let infoData = [];  // array of objects (header:true)
+let dbData = [];    // array of objects (header:true)
+let typesHeader = []; // header array for type chart (first row)
+let typesRows = [];   // rows array for type chart (each row is array)
 
 /* ---------- UI refs ---------- */
 const loadingScreen = document.getElementById("loadingScreen");
@@ -141,259 +156,305 @@ const loadProgress = document.getElementById("loadProgress");
 const app = document.getElementById("app");
 const toggleMode = document.getElementById("toggleMode");
 
-/* toggle */
+/* ---------- toggle dark/light ---------- */
 toggleMode.addEventListener("click", ()=>{
   document.body.classList.toggle("dark-mode");
   toggleMode.textContent = document.body.classList.contains("dark-mode") ? "☀️ Light Mode" : "🌙 Dark Mode";
 });
 
-/* ---------- loading logic ---------- */
-startLoadBtn.addEventListener("click", () => {
+/* ---------- load data ---------- */
+startLoadBtn.addEventListener("click", ()=>{
   loadProgress.style.display = "block";
-  loadProgress.textContent = "Loading sheets…";
-  // Use PapaParse to fetch and parse CSVs robustly
-  const promises = [
-    new Promise((res,rej)=> Papa.parse(SHEET_INFO, {download:true,header:true,skipEmptyLines:true,complete:(resd)=>res(resd.data),error:e=>rej(e)})),
-    new Promise((res,rej)=> Papa.parse(SHEET_DB,   {download:true,header:true,skipEmptyLines:true,complete:(resd)=>res(resd.data),error:e=>rej(e)})),
-    new Promise((res,rej)=> Papa.parse(SHEET_TYPES,{download:true,header:false,skipEmptyLines:true,complete:(resd)=>res(resd.data),error:e=>rej(e)}))
-  ];
+  loadProgress.textContent = "Downloading sheets…";
 
-  Promise.all(promises).then(results=>{
-    // result[0] => info, result[1] => db, result[2] => types (raw rows array)
+  const p1 = new Promise((res,rej)=> Papa.parse(SHEET_INFO, {download:true,header:true,skipEmptyLines:true,complete:(r)=>res(r.data),error:err=>rej(err)}));
+  const p2 = new Promise((res,rej)=> Papa.parse(SHEET_DB,   {download:true,header:true,skipEmptyLines:true,complete:(r)=>res(r.data),error:err=>rej(err)}));
+  const p3 = new Promise((res,rej)=> Papa.parse(SHEET_TYPES,{download:true,header:false,skipEmptyLines:true,complete:(r)=>res(r.data),error:err=>rej(err)}));
+
+  Promise.all([p1,p2,p3]).then(results=>{
     infoData = results[0];
-    dbData = results[1];
+    dbData   = results[1];
+    const rawTypes = results[2];
 
-    // types table: first row are headers (A, type1, type2, ...)
-    const raw = results[2];
-    if(raw.length === 0) {
-      typesTable = { header: [], rows: [] };
+    // normalize types table
+    if(rawTypes && rawTypes.length>0){
+      typesHeader = rawTypes[0].map(c => (c||"").trim());
+      typesRows = rawTypes.slice(1).map(r => r.map(c => (c||"").trim()));
     } else {
-      typesTable.header = raw[0].map(c=> (c||"").trim() );
-      // subsequent rows as arrays (not header-aware)
-      typesTable.rows = raw.slice(1).map(r => r.map(c=> (c||"").trim() ));
+      typesHeader = []; typesRows = [];
     }
 
-    // populate UI selects
-    populateInfoSelect();
-    populateDbSelect();
-    populateTypesSelects();
+    populateInfo();
+    populateDb();
+    populateTypeSelects();
 
-    // hide loading, show app
     loadingScreen.style.display = "none";
     app.style.display = "block";
   }).catch(err=>{
-    console.error("Load failed", err);
-    loadProgress.textContent = "Loading failed. Check sheet URLs & public/published access.";
+    console.error("Load error",err);
+    loadProgress.textContent = "Loading failed — check sheet URLs and that they are published.";
   });
 });
 
 /* ---------- Card 1: Dynamax Info ---------- */
 const infoTypeSelect = document.getElementById("infoTypeSelect");
 const infoResult = document.getElementById("infoResult");
-document.getElementById("infoReset").addEventListener("click", ()=>{
-  infoTypeSelect.value = "";
-  infoResult.innerHTML = "";
-});
+document.getElementById("infoReset").addEventListener("click", ()=>{ infoTypeSelect.value=""; infoResult.innerHTML=""; });
 
-function populateInfoSelect(){
-  // assume infoData rows have keys; use first object's keys to find column A name (we assume 'Type' is header)
-  // We'll simply aggregate first column (first property)
-  if(!infoData || !infoData.length) return;
-  // get first header name
-  const firstRow = infoData[0];
-  const keys = Object.keys(firstRow);
-  if(keys.length===0) return;
-  const colAKey = keys[0];
-  const colBKey = keys[1] || null;
-  // build unique values from colA
-  const set = new Set();
-  for(const r of infoData){ if(r[colAKey]) set.add(r[colAKey].trim()); }
-  const arr = Array.from(set).sort((a,b)=>a.localeCompare(b));
-  // fill select
+function populateInfo(){
   infoTypeSelect.innerHTML = '<option value="">Select Type</option>';
-  arr.forEach(v=>{ const o = document.createElement('option'); o.value=v; o.textContent=v; infoTypeSelect.appendChild(o); });
-  // on change show description (colB)
+  if(!infoData || !infoData.length) return;
+  // Determine first two column keys dynamically
+  const keys = Object.keys(infoData[0]);
+  const colA = keys[0], colB = keys[1] || null;
+  const set = new Set();
+  for(const r of infoData){ if(r[colA]) set.add((r[colA]||"").trim()); }
+  const arr = Array.from(set).sort((a,b)=>a.localeCompare(b));
+  arr.forEach(v=> { const o = document.createElement('option'); o.value=v; o.textContent=v; infoTypeSelect.appendChild(o); });
+
   infoTypeSelect.onchange = ()=>{
-    const sel = infoTypeSelect.value;
-    if(!sel){ infoResult.innerHTML = ""; return; }
-    const hits = infoData.filter(r => (r[colAKey]||"").trim() === sel);
+    const val = infoTypeSelect.value;
+    if(!val){ infoResult.innerHTML = ""; return; }
+    const hits = infoData.filter(r => ((r[colA]||"").trim().toLowerCase() === val.toLowerCase()));
     if(!hits.length){ infoResult.innerHTML = "<div class='note'>No description found.</div>"; return; }
-    // show colB for first hit (or join if multiple)
-    const descs = hits.map(h => (colBKey ? (h[colBKey]||"") : "").trim()).filter(Boolean);
-    infoResult.innerHTML = descs.length ? ('<div style="white-space:pre-wrap;color:#fff;background:rgba(0,0,0,0.12);padding:10px;border-radius:8px">'+escapeHtml(descs.join("\n\n"))+'</div>') : "<div class='note'>No description available.</div>";
+    // show column B of all hits joined with blank line, preserve formatting
+    const texts = hits.map(h => (colB ? (h[colB]||"") : "").trim()).filter(Boolean);
+    infoResult.innerHTML = texts.length ? `<div class="prewrap" style="background:rgba(0,0,0,0.12);padding:10px;border-radius:8px;color:#fff">${escapeHtml(texts.join("\n\n"))}</div>` : "<div class='note'>No description available.</div>";
   };
 }
 
 /* ---------- Card 2: Dynamax Database ---------- */
 const dbGroupSelect = document.getElementById("dbGroupSelect");
 const dbResult = document.getElementById("dbResult");
-document.getElementById("dbReset").addEventListener("click", ()=>{
-  dbGroupSelect.value = "";
-  dbResult.style.display = "none";
-  dbResult.innerHTML = "";
-});
+document.getElementById("dbReset").addEventListener("click", ()=>{ dbGroupSelect.value=""; dbResult.style.display="none"; dbResult.innerHTML=""; });
 
-function populateDbSelect(){
-  if(!dbData || !dbData.length) return;
-  const first = dbData[0];
-  const keys = Object.keys(first);
-  const colAKey = keys[0];
-  const uniques = Array.from(new Set(dbData.map(r=> (r[colAKey]||"").trim()))).sort((a,b)=>a.localeCompare(b));
+function populateDb(){
   dbGroupSelect.innerHTML = '<option value="">Select Group</option>';
-  uniques.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; dbGroupSelect.appendChild(o); });
+  if(!dbData || !dbData.length) return;
+  const keys = Object.keys(dbData[0]);
+  const colA = keys[0];
+  const uniq = Array.from(new Set(dbData.map(r=> (r[colA]||"").trim()))).sort((a,b)=>a.localeCompare(b));
+  uniq.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; dbGroupSelect.appendChild(o); });
+
   dbGroupSelect.onchange = ()=>{
-    const sel = dbGroupSelect.value;
-    if(!sel){ dbResult.style.display="none"; dbResult.innerHTML=""; return; }
-    const rows = dbData.filter(r=> (r[colAKey]||"").trim() === sel);
-    if(!rows.length){ dbResult.innerHTML = "<div class='note'>No rows.</div>"; dbResult.style.display="block"; return; }
-    // Create table showing A..I if present
-    const keysToShow = Object.keys(rows[0]).slice(0,9); // A..I (up to 9 columns)
+    const val = dbGroupSelect.value;
+    if(!val){ dbResult.style.display="none"; dbResult.innerHTML=""; return; }
+    const rows = dbData.filter(r => ((r[colA]||"").trim() === val));
+    if(!rows.length){ dbResult.innerHTML = "<div class='note'>No rows found.</div>"; dbResult.style.display="block"; return; }
+    // show columns A..I (or available columns)
+    const cols = Object.keys(rows[0]).slice(0,9);
     let html = "<table><thead><tr>";
-    keysToShow.forEach(k=> html += `<th>${escapeHtml(k)}</th>`);
+    cols.forEach(c=> html += `<th>${escapeHtml(c)}</th>`);
     html += "</tr></thead><tbody>";
     rows.forEach(r=>{
       html += "<tr>";
-      keysToShow.forEach(k=> html += `<td>${escapeHtml(r[k]||"")}</td>`);
+      cols.forEach(c=>{
+        const cell = r[c] || "";
+        // preserve newlines and dashes using pre-wrap
+        html += `<td class="prewrap">${escapeHtml(cell)}</td>`;
+      });
       html += "</tr>";
     });
     html += "</tbody></table>";
-    dbResult.innerHTML = html; dbResult.style.display = "block";
+    dbResult.innerHTML = html;
+    dbResult.style.display = "block";
   };
 }
 
-/* ---------- Card 3: Type Check ---------- */
-/* typesTable: header is an array, rows is array of arrays */
-const defType1 = document.getElementById("defType1");
-const defType2 = document.getElementById("defType2");
-const defFindBtn = document.getElementById("defFindBtn");
-const defReset = document.getElementById("defReset");
-const candidatesDiv = document.getElementById("candidates");
+/* ---------- Card 3: Type Effectiveness ---------- */
+/* parse typesHeader (array) and typesRows (array of arrays)
+   header: [ "Type","Normal","Fire",... ]  (first column label then defender types)
+   typesRows: [ ["Normal","1","1",...], ["Fighting","2","0.5",...] ] where each row[0] is attack type name
+*/
 
-const atkSelects = [document.getElementById("atk1"),document.getElementById("atk2"),document.getElementById("atk3"),document.getElementById("atk4")];
-const atkShowBtn = document.getElementById("atkShowBtn");
-const atkReset = document.getElementById("atkReset");
-const atkResult = document.getElementById("atkResult");
+const raidType1 = document.getElementById("raidType1");
+const raidType2 = document.getElementById("raidType2");
+const findAttackersBtn = document.getElementById("findAttackers");
+const resetRaidBtn = document.getElementById("resetRaid");
+const attackCandidatesDiv = document.getElementById("attackCandidates");
 
-function populateTypesSelects(){
-  // header contains column names; we assume header[0] is label for column A, then header[1..] are type names
-  defType1.innerHTML = '<option value="">(none)</option>';
-  defType2.innerHTML = '<option value="">(none)</option>';
-  atkSelects.forEach(s=> s.innerHTML = '<option value="">(none)</option>');
-  if(!typesTable.header || typesTable.header.length < 2) return;
-  const typeNames = typesTable.header.slice(1); // B..end
-  typeNames.forEach(t=>{
-    const o1 = document.createElement('option'); o1.value=t; o1.textContent=t;
-    defType1.appendChild(o1.cloneNode(true));
-    defType2.appendChild(o1.cloneNode(true));
-    atkSelects.forEach(s=> s.appendChild(o1.cloneNode(true)));
+const moveSelects = [document.getElementById("move1"),document.getElementById("move2"),document.getElementById("move3"),document.getElementById("move4")];
+const evaluateVulnBtn = document.getElementById("evaluateVuln");
+const resetMovesBtn = document.getElementById("resetMoves");
+const vulnResultDiv = document.getElementById("vulnResult");
+
+function populateTypeSelects(){
+  // clear first
+  [raidType1,raidType2,...moveSelects].forEach(s=>{
+    if(!s) return;
+    s.innerHTML = '<option value="">(none)</option>';
+  });
+  if(!typesHeader || typesHeader.length < 2) return;
+  // defender type names are header[1..]
+  const defenderTypes = typesHeader.slice(1);
+  defenderTypes.forEach(t=>{
+    // append to raid selects
+    const o1 = document.createElement('option'); o1.value = t; o1.textContent = t;
+    raidType1.appendChild(o1.cloneNode(true));
+    raidType2.appendChild(o1.cloneNode(true));
+    // append to move selects as well (attack types are row[0], but moves are by type too; we'll also add attack type names later)
+    moveSelects.forEach(s => s.appendChild(o1.cloneNode(true)));
+  });
+  // Add attack type names (rows' first col) to move selects as additional options if not present
+  typesRows.forEach(r=>{
+    const atk = (r[0]||"").trim();
+    if(!atk) return;
+    moveSelects.forEach(s=>{
+      // don't duplicate (some types may already be present)
+      if(!Array.from(s.options).some(opt=>opt.value.toLowerCase()===atk.toLowerCase())){
+        const o=document.createElement('option'); o.value=atk; o.textContent=atk;
+        s.appendChild(o);
+      }
+    });
   });
 }
 
-/* helper: find column index for a given typeName in header (returns numeric index into row array) */
-function colIndexForType(typeName){
-  if(!typesTable.header) return -1;
-  const idx = typesTable.header.indexOf(typeName);
-  return idx; // 0-based (0 corresponds to col A)
+/* utility: find defender column index by type name (returns index in header/row; header[0] is label)
+   returns numeric index (0-based) matching typesHeader; for defender columns, it's >=1
+*/
+function defenderColIndex(typeName){
+  if(!typesHeader) return -1;
+  for(let i=1;i<typesHeader.length;i++){
+    if((typesHeader[i]||"").trim().toLowerCase() === (typeName||"").trim().toLowerCase()) return i;
+  }
+  return -1;
 }
 
-/* Find candidate types given defensive selections (require cell == '2' for the matching columns) */
-let currentCandidates = []; // array of candidate type names (these correspond to header names in header slice)
-defFindBtn.addEventListener("click", ()=>{
-  candidatesDiv.innerHTML = "";
+/* utility: find attack row by attackType name (match row[0]) */
+function findAttackRow(attackType){
+  if(!typesRows) return null;
+  for(const r of typesRows){
+    if(((r[0]||"").trim().toLowerCase()) === (attackType||"").trim().toLowerCase()) return r;
+  }
+  return null;
+}
+
+/* compute multiplier of attackRow vs defender types array */
+function computeMultiplierForAttackRow(attackRow, defenderTypes){
+  // attackRow is array; defenderTypes is array of type names (1 or 2)
+  if(!attackRow) return 1;
+  let mult = 1;
+  for(const d of defenderTypes){
+    const col = defenderColIndex(d);
+    if(col < 1) return null; // missing column
+    const cell = (attackRow[col]||"").trim();
+    const num = Number(cell);
+    if(Number.isNaN(num)) return null;
+    mult *= num;
+  }
+  return mult;
+}
+
+/* when findAttackers pressed */
+let currentCandidates = []; // list of attack types (strings)
+findAttackersBtn.addEventListener("click", ()=>{
+  attackCandidatesDiv.innerHTML = "";
+  vulnResultDiv.style.display = "none"; vulnResultDiv.innerHTML = "";
   currentCandidates = [];
-  if(!typesTable.header || typesTable.header.length < 2){ candidatesDiv.textContent = "Type table not loaded or invalid."; return; }
-  const d1 = defType1.value;
-  const d2 = defType2.value;
-  if(!d1 && !d2){ candidatesDiv.textContent = "Select at least one defensive type."; return; }
-  // defensive columns indices
-  const cols = [];
-  if(d1){ const c = colIndexForType(d1); if(c>=0) cols.push(c); }
-  if(d2){ const c = colIndexForType(d2); if(c>=0) cols.push(c); }
-  if(!cols.length){ candidatesDiv.textContent = "Defensive type columns not found in sheet."; return; }
 
-  // iterate over rows: each row is an array where [0] is name (col A), [1..] numbers/strings
-  const candidates = [];
-  for(const row of typesTable.rows){
-    // require that for all selected defensive columns, row[colIndex] === "2" (string) and not "0"
+  const d1 = raidType1.value;
+  const d2 = raidType2.value;
+  if(!d1 && !d2){ attackCandidatesDiv.textContent = "Select at least one Raid Type (defender)."; return; }
+  const defenders = [];
+  if(d1) defenders.push(d1);
+  if(d2) defenders.push(d2);
+
+  // Loop through each attack row (typesRows). For each, compute per-defender-type cell values and multiplier.
+  const matches = [];
+  for(const r of typesRows){
+    const atkName = (r[0]||"").trim();
+    if(!atkName) continue;
+    // for each defender type, get the cell value
     let ok = true;
-    for(const ci of cols){
-      const cell = (row[ci]||"").trim();
-      if(cell !== "2"){ ok = false; break; }
-      if(cell === "0"){ ok = false; break; }
+    let mult = 1;
+    for(const d of defenders){
+      const col = defenderColIndex(d);
+      if(col < 1){ ok = false; break; } // missing defender column
+      const cell = (r[col]||"").trim();
+      const num = Number(cell);
+      if(Number.isNaN(num)){ ok=false; break; }
+      if(num === 0){ ok = false; break; } // if any sub-type is 0 -> negated
+      mult *= num;
     }
-    if(ok){
-      // take row[0] as candidate title (col A)
-      const title = (row[0]||"").trim();
-      if(title) candidates.push(title);
+    if(!ok) continue;
+    // consider it candidate if mult >= 2 (as requested)
+    if(mult >= 2){
+      matches.push({ attack: atkName, multiplier: mult });
     }
   }
-  currentCandidates = Array.from(new Set(candidates)).sort((a,b)=>a.localeCompare(b));
-  if(!currentCandidates.length){
-    candidatesDiv.textContent = "No candidate types found for the selected defensive types.";
-  } else {
-    candidatesDiv.innerHTML = "<strong>Candidates:</strong> " + currentCandidates.join(", ");
+
+  if(!matches.length){
+    attackCandidatesDiv.textContent = "No attacker types found that deal >=2× to the selected raid type(s).";
+    currentCandidates = [];
+    return;
   }
+  // sort by multiplier desc then name
+  matches.sort((a,b)=> b.multiplier - a.multiplier || a.attack.localeCompare(b.attack));
+  currentCandidates = matches.map(m=>m.attack);
+  // show list with multiplier
+  attackCandidatesDiv.innerHTML = "<strong>Candidates:</strong> " + matches.map(m=>`${escapeHtml(m.attack)} (${m.multiplier}×)`).join(", ");
 });
 
-/* Reset defensive */
-defReset.addEventListener("click", ()=>{
-  defType1.value = ""; defType2.value = "";
-  candidatesDiv.innerHTML = ""; currentCandidates = [];
-  atkResult.style.display = "none"; atkResult.innerHTML = "";
-});
-
-/* Attack Show */
-atkShowBtn.addEventListener("click", ()=>{
-  atkResult.style.display = "none"; atkResult.innerHTML = "";
-  if(!currentCandidates.length){ atkResult.style.display="block"; atkResult.innerHTML="<div class='note'>No candidates — run the Defensive step first.</div>"; return; }
-  // collect selected attacks
-  const attacks = atkSelects.map(s=>s.value).filter(Boolean);
-  if(!attacks.length){ atkResult.style.display="block"; atkResult.innerHTML="<div class='note'>Select at least one Attack type.</div>"; return; }
-
-  // For each attack type, find the row in typesTable.rows where row[0] equals the attack name (case-sensitive trimmed)
-  const attackRows = [];
-  for(const a of attacks){
-    const found = typesTable.rows.find(r => ((r[0]||"").trim().toLowerCase() === a.trim().toLowerCase()));
-    if(found) attackRows.push({ attack: a, row: found });
-    else attackRows.push({ attack: a, row: null });
+/* Evaluate vulnerability: for each candidate (defender = candidate type), compute multipliers for each selected move type */
+evaluateVulnBtn.addEventListener("click", ()=>{
+  vulnResultDiv.style.display = "none"; vulnResultDiv.innerHTML = "";
+  if(!currentCandidates || !currentCandidates.length){
+    vulnResultDiv.style.display = "block"; vulnResultDiv.innerHTML = "<div class='note'>No candidates — run the 'Find Attackers' step first.</div>";
+    return;
+  }
+  const moves = moveSelects.map(s=>s.value).filter(Boolean);
+  if(!moves.length){
+    vulnResultDiv.style.display = "block"; vulnResultDiv.innerHTML = "<div class='note'>Select at least one move type (attack type) from the Raid movepool.</div>";
+    return;
   }
 
-  // build table: header = [Attack | candidate1 | candidate2 | ...]
-  let html = "<table><thead><tr><th>Attack \\ Candidate</th>";
-  currentCandidates.forEach(c=> html += `<th>${escapeHtml(c)}</th>`);
-  html += "</tr></thead><tbody>";
-  // for each attackRow output values corresponding to each candidate column (we must find column index for candidate name)
-  for(const ar of attackRows){
-    html += `<tr><td>${escapeHtml(ar.attack)}</td>`;
-    if(!ar.row){
-      // row missing -> show '-' in columns
-      currentCandidates.forEach(()=> html += `<td>—</td>`);
-    } else {
-      for(const cand of currentCandidates){
-        const idx = colIndexForType(cand); // returns header index (0-based)
-        // If idx < 0 or idx >= row.length -> empty
-        let val = (ar.row[idx] !== undefined) ? ar.row[idx] : "";
-        html += `<td>${escapeHtml(val)}</td>`;
+  // Build table header: Candidate | move1 | move2 | ... | Max
+  let html = "<table><thead><tr><th>Candidate (as defender)</th>";
+  moves.forEach(m => html += `<th>${escapeHtml(m)}</th>`);
+  html += "<th>Max</th></tr></thead><tbody>";
+
+  for(const cand of currentCandidates){
+    html += `<tr><td>${escapeHtml(cand)}</td>`;
+    let maxv = 0;
+    for(const mv of moves){
+      // find attackRow for move type (attack type)
+      const attackRow = findAttackRow(mv) || findAttackRowByHeaderName(mv); // fallback
+      if(!attackRow){
+        html += `<td>—</td>`;
+        continue;
       }
+      // index of candidate in header
+      const col = defenderColIndex(cand);
+      if(col < 1){ html += `<td>—</td>`; continue; }
+      const val = attackRow[col] || "";
+      const num = Number(val);
+      const display = (val === "") ? "—" : (Number.isNaN(num) ? escapeHtml(val) : num + "×");
+      if(!Number.isNaN(num) && num > maxv) maxv = num;
+      html += `<td>${escapeHtml(display)}</td>`;
     }
+    html += `<td>${maxv>0? (maxv + "×") : "—"}</td>`;
     html += "</tr>";
   }
+
   html += "</tbody></table>";
-  atkResult.innerHTML = html;
-  atkResult.style.display = "block";
+  vulnResultDiv.innerHTML = html;
+  vulnResultDiv.style.display = "block";
 });
 
-/* Reset attack selects */
-atkReset.addEventListener("click", ()=>{
-  atkSelects.forEach(s=> s.value = "");
-  atkResult.style.display = "none";
-  atkResult.innerHTML = "";
-});
+/* helper: sometimes header includes attack types too; search column headers for an attack-type-like match */
+function findAttackRowByHeaderName(name){
+  // find header index which equals name and then use corresponding row? Not typical. We'll return null.
+  return null;
+}
+
+/* Resets */
+resetRaidBtn.addEventListener("click", ()=>{ raidType1.value=""; raidType2.value=""; attackCandidatesDiv.innerHTML=""; currentCandidates = []; vulnResultDiv.style.display="none"; vulnResultDiv.innerHTML=""; });
+resetMovesBtn.addEventListener("click", ()=>{ moveSelects.forEach(s=> s.value=""); vulnResultDiv.style.display="none"; vulnResultDiv.innerHTML=""; });
 
 /* ---------- helpers ---------- */
 function escapeHtml(s){
   if(s === null || s === undefined) return "";
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 </script>
 </body>
