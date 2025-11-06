@@ -1,461 +1,579 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>PBO Dynamax Helper</title>
+<title>Dynamax Helper</title>
 
-<!-- PapaParse for robust CSV parsing -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
-:root{
-  --bg-light:#666769; --bg-dark:#1A252C;
-  --card-light:#026503; --card-dark:#023804;
-  --btn-bg:#F0F0F0; --btn-text:#000;
-}
-*{box-sizing:border-box}
-body{font-family:Inter,system-ui,Arial,sans-serif;margin:0;background:var(--bg-light);color:#fff;min-height:100vh}
-.dark-mode{background:var(--bg-dark);color:#fff}
-.container{max-width:1100px;margin:72px auto;padding:20px}
-.header{display:flex;align-items:center;gap:12px;justify-content:center}
-h1{margin:0 0 14px 0;font-size:1.4rem;text-align:center;color:#fff}
-.toggle-container{position:fixed;top:14px;right:18px;z-index:1200}
-.toggle-btn{background:var(--btn-bg);color:var(--btn-text);border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
-.dark-mode .toggle-btn{background:#222;color:#fff}
+  :root{
+    --bg-light:#666769;
+    --bg-dark:#0f1417;
+    --card-light:linear-gradient(180deg,#1f6b4d,#0f4d37);
+    --card-dark:linear-gradient(180deg,#153033,#0c1b16);
+    --title-color:#ffffff;
+    --muted: rgba(255,255,255,0.85);
+    --glass: rgba(255,255,255,0.04);
+  }
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial,sans-serif}
+  body{background:var(--bg-light);color:#fff}
+  body.dark{background:var(--bg-dark);color:#fff}
 
-/* Loading screen */
-.loading-screen{height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg-light);position:fixed;inset:0;z-index:2000}
-.dark-mode .loading-screen{background:var(--bg-dark)}
-.load-box{background:var(--card-light);padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.25);text-align:center}
-.dark-mode .load-box{background:var(--card-dark)}
-.load-img{width:180px;height:180px;object-fit:cover;border-radius:12px;display:block;margin:6px auto}
-.load-btn{padding:10px 18px;border-radius:10px;border:none;background:var(--btn-bg);color:var(--btn-text);cursor:pointer;font-weight:700}
-.progress{margin-top:12px;font-size:0.95rem;color:rgba(255,255,255,0.9)}
+  /* toggle top-right */
+  .mode-toggle{
+    position:fixed;
+    top:12px;
+    right:12px;
+    z-index:1200;
+    background:rgba(255,255,255,0.92);
+    color:#111;
+    padding:8px 12px;
+    border-radius:10px;
+    cursor:pointer;
+    box-shadow:0 6px 18px rgba(0,0,0,0.16);
+    user-select:none;
+    font-size:14px;
+  }
+  body.dark .mode-toggle{background:rgba(0,0,0,0.6);color:#fff}
 
-/* cards */
-.card{background:var(--card-light);padding:16px;border-radius:12px;margin-bottom:18px}
-.dark-mode .card{background:var(--card-dark)}
-label{display:block;margin-bottom:6px;font-size:0.95rem}
-select,input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);margin-bottom:8px;background:transparent;color:inherit}
-.row{display:flex;gap:12px}
-.row>div{flex:1}
-.small-btn{padding:8px 12px;border-radius:8px;border:none;background:var(--btn-bg);color:var(--btn-text);cursor:pointer;font-weight:600}
-.small-btn:disabled{opacity:0.5;cursor:not-allowed}
-.note{font-size:0.9rem;color:rgba(255,255,255,0.9);margin-top:8px}
+  /* loading screen */
+  .loader{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:14px;
+    text-align:center;
+    padding:32px;
+  }
+  .loader img.logo{width:220px;height:220px;object-fit:cover;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,0.35)}
+  .load-btn{
+    padding:12px 20px;
+    border-radius:12px;
+    border:none;
+    background:#F0F0F0;
+    color:#111;
+    cursor:pointer;
+    font-size:16px;
+    width:auto;
+  }
+  .loading-text{color:var(--muted);margin-top:6px;font-size:0.95rem}
 
-/* table wrapper */
-.table-wrap{overflow:auto;margin-top:10px;background:#fff;color:#000;border-radius:8px;padding:8px}
-.dark-mode .table-wrap{background:#071418;color:#fff}
-table{border-collapse:collapse;width:100%}
-th,td{padding:8px;border-bottom:1px solid rgba(0,0,0,0.08);text-align:left;vertical-align:top}
-th{background:rgba(255,255,255,0.12);font-weight:700}
+  /* app */
+  .wrap{max-width:1100px;margin:28px auto;padding:18px;display:grid;grid-template-columns:1fr;gap:16px}
+  .card{
+    border-radius:14px;
+    padding:18px;
+    background:var(--card-light);
+    color:#fff;
+    box-shadow:0 10px 30px rgba(0,0,0,0.12);
+    transition:transform .12s ease, box-shadow .12s ease;
+    overflow:hidden;
+  }
+  body.dark .card{background:var(--card-dark)}
+  .card:hover{transform:translateY(-4px)}
+  h1{margin:0 0 12px;color:var(--title-color);font-size:20px}
+  label{display:block;font-size:0.95rem;margin-top:10px;margin-bottom:6px;color:#fff}
+  select,button{
+    width:100%;
+    box-sizing:border-box;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1px solid rgba(0,0,0,0.08);
+    font-size:15px;
+    margin-bottom:10px;
+  }
+  select{background:#fff;color:#000}
+  body.dark select{background:#000;color:#fff;border:1px solid rgba(255,255,255,0.06)}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .controls button{width:auto;padding:10px 14px;border-radius:8px;cursor:pointer}
+  .results{margin-top:12px;background:var(--glass);padding:12px;border-radius:8px;color:inherit}
+  pre.preserve{white-space:pre-wrap;margin:0;font-family:inherit}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top}
+  th{background:rgba(0,0,0,0.08);position:sticky;top:0;z-index:3}
+  .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.06);font-size:13px}
 
-/* preserve content formatting */
-.prewrap{white-space:pre-wrap;word-break:break-word}
+  /* value color coding for type chart */
+  .cell-strong{background:#7a0f0f;color:#fff;font-weight:600} /* 2 */
+  .cell-super{background:#b33a1a;color:#fff;font-weight:600} /* strongish */
+  .cell-normal{background:transparent;color:inherit}
+  .cell-resist{background:#1a4d6b;color:#fff} /* 0.5 */
+  .cell-immune{background:#444;color:#fff} /* 0 or immune */
+  .cell-other{background:rgba(255,255,255,0.03)}
+  .nowrap{white-space:nowrap}
 
-/* responsive */
-@media (max-width:760px){.row{flex-direction:column}}
-.footer{margin-top:30px;text-align:center;color:rgba(255,255,255,0.8);font-weight:600}
+  /* responsive */
+  @media(max-width:980px){
+    .wrap{padding:12px}
+    .loader img.logo{width:180px;height:180px}
+  }
+  @media(min-width:900px){
+    .wrap{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(min-width:1300px){
+    .wrap{grid-template-columns:repeat(2,1fr);max-width:1400px}
+  }
 </style>
 </head>
 <body>
+  <div id="modeToggle" class="mode-toggle">🌙 Dark Mode</div>
 
-<!-- Toggle -->
-<div class="toggle-container">
-  <button id="toggleMode" class="toggle-btn">🌙 Dark Mode</button>
-</div>
-
-<!-- Loading screen -->
-<div id="loadingScreen" class="loading-screen">
-  <div class="load-box">
-    <h2>PBO Dynamax Helper</h2>
-    <!-- your usual image -->
-    <img class="load-img" src="https://i.imgur.com/XZcfQzw.png" alt="CloudNine">
-    <p style="margin:8px 0 12px 0">Click to load data from the published sheets (CSV)</p>
-    <button id="startLoad" class="load-btn">Load Data</button>
-    <div id="loadProgress" class="progress" style="display:none"></div>
-    <div style="font-size:0.85rem;margin-top:8px;color:rgba(255,255,255,0.8)">Sheets must be published and publicly accessible.</div>
-  </div>
-</div>
-
-<!-- App -->
-<div id="app" class="container" style="display:none">
-  <div class="header"><h1>PBO Dynamax Helper</h1></div>
-
-  <!-- Card 1: Dynamax Info -->
-  <div class="card" id="card-info">
-    <h3>Dynamax Info</h3>
-    <label>Type (column A)</label>
-    <select id="infoTypeSelect"><option value="">Select Type</option></select>
-    <div style="margin-top:8px">
-      <button id="infoReset" class="small-btn">Reset</button>
-    </div>
-    <div id="infoResult" class="note prewrap" style="margin-top:10px"></div>
+  <!-- Loading screen -->
+  <div id="loading" class="loader" aria-live="polite">
+    <img class="logo" src="https://i.imgur.com/XZcfQzw.png" alt="Dynamax logo">
+    <button id="loadBtn" class="load-btn">Load Data</button>
+    <div id="loadingText" class="loading-text" style="display:none">Loading...</div>
   </div>
 
-  <!-- Card 2: Dynamax Database -->
-  <div class="card" id="card-db">
-    <h3>Dynamax Database</h3>
-    <label>Group (column A)</label>
-    <select id="dbGroupSelect"><option value="">Select Group</option></select>
-    <div style="margin-top:8px">
-      <button id="dbReset" class="small-btn">Reset</button>
-    </div>
-    <div id="dbResult" class="table-wrap" style="display:none"></div>
-  </div>
-
-  <!-- Card 3: Type Effectiveness Checker -->
-  <div class="card" id="card-type">
-    <h3>Type Effectiveness Checker</h3>
-
-    <div style="margin-bottom:10px">
-      <label>Raid Type(s) — choose up to 2 (defender)</label>
-      <div class="row">
-        <div><select id="raidType1"><option value="">(none)</option></select></div>
-        <div><select id="raidType2"><option value="">(none)</option></select></div>
+  <!-- App -->
+  <div id="app" class="wrap" style="display:none">
+    <!-- Card 1: Dynmax Info -->
+    <div class="card" id="card-info">
+      <h1>Dynmax Info</h1>
+      <label for="infoFilter">Filter (Spalte A: type)</label>
+      <select id="infoFilter"><option value="">-- wählen --</option></select>
+      <div class="controls">
+        <button id="infoShow">Anzeigen</button>
+        <button id="infoReset">Zurücksetzen</button>
       </div>
-      <div style="margin-top:8px"><button id="findAttackers" class="small-btn">Find Attackers (≥2×)</button> <button id="resetRaid" class="small-btn">Reset</button></div>
-      <div id="attackCandidates" class="note" style="margin-top:8px"></div>
+      <div id="infoOut" class="results" style="display:none"></div>
     </div>
 
-    <hr style="border:none;height:10px">
-
-    <div style="margin-top:10px">
-      <label>Movepool Types — choose up to 4 (attack types)</label>
-      <div class="row">
-        <div><select id="move1"><option value="">(none)</option></select></div>
-        <div><select id="move2"><option value="">(none)</option></select></div>
-        <div><select id="move3"><option value="">(none)</option></select></div>
-        <div><select id="move4"><option value="">(none)</option></select></div>
+    <!-- Card 2: Dynamax Database -->
+    <div class="card" id="card-db">
+      <h1>Dynamax Database</h1>
+      <label for="dbFilter">Filter (Spalte A)</label>
+      <select id="dbFilter"><option value="">-- wählen --</option></select>
+      <div class="controls">
+        <button id="dbShow">Anzeigen</button>
+        <button id="dbReset">Zurücksetzen</button>
       </div>
-      <div style="margin-top:8px"><button id="evaluateVuln" class="small-btn">Evaluate Vulnerability</button> <button id="resetMoves" class="small-btn">Reset</button></div>
-      <div id="vulnResult" class="table-wrap" style="display:none;margin-top:10px"></div>
+      <div id="dbOut" class="results" style="display:none"></div>
+    </div>
+
+    <!-- Card 3: Dynamax Move -->
+    <div class="card" id="card-move">
+      <h1>Dynamax Move</h1>
+      <label for="moveFilter">Filter (Spalte A)</label>
+      <select id="moveFilter"><option value="">-- wählen --</option></select>
+      <div class="controls">
+        <button id="moveShow">Anzeigen</button>
+        <button id="moveReset">Zurücksetzen</button>
+      </div>
+      <div id="moveOut" class="results" style="display:none"></div>
+    </div>
+
+    <!-- Card 4: Attack / Defense Check -->
+    <div class="card" id="card-attack">
+      <h1>Attack Check</h1>
+      <p style="margin:4px 0 10px;color:var(--muted)">Wähle 1 oder 2 Verteidiger-Typen (Spalten). Ergebnis: Angriffstypen (Spalte A), die <strong>eine 2</strong> und (bei 2 Verteidigern) <strong>mindestens eine 1</strong> haben.</p>
+      <label for="atkDef1">Verteidiger 1</label>
+      <select id="atkDef1"><option value="">-- wählen --</option></select>
+      <label for="atkDef2">Verteidiger 2 (optional)</label>
+      <select id="atkDef2"><option value="">-- wählen --</option></select>
+      <div class="controls">
+        <button id="atkShow">Show</button>
+        <button id="atkReset">Reset</button>
+      </div>
+      <div id="atkOut" class="results" style="display:none"></div>
+
+      <hr style="margin:14px 0;border:none;border-top:1px solid rgba(255,255,255,0.04)">
+
+      <h1>Defense Check</h1>
+      <p style="margin:4px 0 10px;color:var(--muted)">Wähle bis zu 4 Moves (entspricht Zeilen). Zeige die Zeilenbereiche A–S mit Kopfzeile. Farbcode der Zellen wird berücksichtigt (basierend auf Effektivitätswerten).</p>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+        <select id="def1"><option value="">-- Move 1 --</option></select>
+        <select id="def2"><option value="">-- Move 2 --</option></select>
+        <select id="def3"><option value="">-- Move 3 --</option></select>
+        <select id="def4"><option value="">-- Move 4 --</option></select>
+      </div>
+      <div class="controls" style="margin-top:8px">
+        <button id="defShow">Show Defense</button>
+        <button id="defReset">Reset</button>
+      </div>
+      <div id="defOut" class="results" style="display:none;overflow:auto;max-height:420px"></div>
     </div>
   </div>
-
-  <div class="footer">@CloudNine</div>
-</div>
 
 <script>
-/* ---------- Sheet URLs ---------- */
-const SHEET_INFO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRKBJf3BXL7kqLIu8WAZCiFIBqNTMVvWCmkRA2kVoC30QskuIRkxwUKJJnrHKh2Y8I18iZ0p068wRD2/pub?output=csv";
-const SHEET_DB   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGq_ta_VKuhpNif51aoWSm2XKE04CHREcDqGObDZnBQ0kK3Yo-_Bz7i7u1oP1Xv9pRm0-xN7dDgyiT/pub?output=csv";
-const SHEET_TYPES= "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUYm_GBIYmou5lzjHIeXmz9GlP0d4_z3g6Jxrpof_DvIBFdOh8bL4dNF8v4T2Vn5sseu8zOhRzP74O/pub?output=csv";
+/* Utilities */
+const $ = id => document.getElementById(id);
+const escapeHtml = s => s == null ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-/* ---------- state ---------- */
-let infoData = [];  // array of objects (header:true)
-let dbData = [];    // array of objects (header:true)
-let typesHeader = []; // header array for type chart (first row)
-let typesRows = [];   // rows array for type chart (each row is array)
+function normalizeValue(v){
+  if(v==null) return '';
+  const s = String(v).trim();
+  if(s === '') return '';
+  // variants of 0.5
+  if(/^(0\.5|½|1\/2)$/i.test(s)) return '0.5';
+  if(/^(2|2\.0)$/i.test(s)) return '2';
+  if(/^(1|1\.0)$/i.test(s)) return '1';
+  if(/^(0|0\.0|immune|x0)$/i.test(s.toLowerCase())) return '0';
+  return s;
+}
+function valueClass(v){
+  const n = normalizeValue(v);
+  if(n==='2') return 'cell-strong';
+  if(n==='1') return 'cell-normal';
+  if(n==='0.5') return 'cell-resist';
+  if(n==='0') return 'cell-immune';
+  if(n==='') return 'cell-other';
+  return 'cell-other';
+}
 
-/* ---------- UI refs ---------- */
-const loadingScreen = document.getElementById("loadingScreen");
-const startLoadBtn = document.getElementById("startLoad");
-const loadProgress = document.getElementById("loadProgress");
-const app = document.getElementById("app");
-const toggleMode = document.getElementById("toggleMode");
+/* CSV sources from user */
+const URL_INFO = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRKBJf3BXL7kqLIu8WAZCiFIBqNTMVvWCmkRA2kVoC30QskuIRkxwUKJJnrHKh2Y8I18iZ0p068wRD2/pub?output=csv";
+const URL_DB   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGq_ta_VKuhpNif51aoWSm2XKE04CHREcDqGObDZnBQ0kK3Yo-_Bz7i7u1oP1Xv9pRm0-xN7dDgyiT/pub?output=csv";
+const URL_MOVE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfBHLwHVULXabVXPztSXOz-36oGnjJFxuHyhgftVYg3Ft_f7VqkVwfpdmQwrfZEXrdjCKnydJBqRHt/pub?output=csv";
+const URL_ATTACK = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUYm_GBIYmou5lzjHIeXmz9GlP0d4_z3g6Jxrpof_DvIBFdOh8bL4dNF8v4T2Vn5sseu8zOhRzP74O/pub?output=csv";
 
-/* ---------- toggle dark/light ---------- */
-toggleMode.addEventListener("click", ()=>{
-  document.body.classList.toggle("dark-mode");
-  toggleMode.textContent = document.body.classList.contains("dark-mode") ? "☀️ Light Mode" : "🌙 Dark Mode";
-});
+/* Data holders */
+let infoRows = [], infoFields = [];
+let dbRows = [], dbFields = [];
+let moveRows = [], moveFields = [];
+let atkRows = [], atkFields = [];
 
-/* ---------- load data ---------- */
-startLoadBtn.addEventListener("click", ()=>{
-  loadProgress.style.display = "block";
-  loadProgress.textContent = "Downloading sheets…";
+/* Load everything */
+function showLoading(msg){
+  $('loadingText').style.display='block';
+  $('loadingText').textContent = msg || 'Loading...';
+}
+function hideLoading(){
+  $('loadingText').style.display='none';
+}
+function loadAll(){
+  $('loadBtn').disabled = true;
+  showLoading('Lade Tabellen…');
 
-  const p1 = new Promise((res,rej)=> Papa.parse(SHEET_INFO, {download:true,header:true,skipEmptyLines:true,complete:(r)=>res(r.data),error:err=>rej(err)}));
-  const p2 = new Promise((res,rej)=> Papa.parse(SHEET_DB,   {download:true,header:true,skipEmptyLines:true,complete:(r)=>res(r.data),error:err=>rej(err)}));
-  const p3 = new Promise((res,rej)=> Papa.parse(SHEET_TYPES,{download:true,header:false,skipEmptyLines:true,complete:(r)=>res(r.data),error:err=>rej(err)}));
+  const tasks = [
+    parseCSV(URL_INFO).then(r => { infoRows = r.data; infoFields = r.fields; }),
+    parseCSV(URL_DB).then(r => { dbRows = r.data; dbFields = r.fields; }),
+    parseCSV(URL_MOVE).then(r => { moveRows = r.data; moveFields = r.fields; }),
+    parseCSV(URL_ATTACK).then(r => { atkRows = r.data; atkFields = r.fields; })
+  ];
 
-  Promise.all([p1,p2,p3]).then(results=>{
-    infoData = results[0];
-    dbData   = results[1];
-    const rawTypes = results[2];
-
-    // normalize types table
-    if(rawTypes && rawTypes.length>0){
-      typesHeader = rawTypes[0].map(c => (c||"").trim());
-      typesRows = rawTypes.slice(1).map(r => r.map(c => (c||"").trim()));
-    } else {
-      typesHeader = []; typesRows = [];
-    }
-
-    populateInfo();
-    populateDb();
-    populateTypeSelects();
-
-    loadingScreen.style.display = "none";
-    app.style.display = "block";
+  Promise.all(tasks).then(()=>{
+    hideLoading();
+    $('loading').style.display='none';
+    $('app').style.display='grid';
+    populateAllFilters();
   }).catch(err=>{
-    console.error("Load error",err);
-    loadProgress.textContent = "Loading failed — check sheet URLs and that they are published.";
+    console.error(err);
+    $('loadingText').textContent = 'Fehler beim Laden – Konsole prüfen.';
+    $('loadBtn').disabled=false;
   });
-});
-
-/* ---------- Card 1: Dynamax Info ---------- */
-const infoTypeSelect = document.getElementById("infoTypeSelect");
-const infoResult = document.getElementById("infoResult");
-document.getElementById("infoReset").addEventListener("click", ()=>{ infoTypeSelect.value=""; infoResult.innerHTML=""; });
-
-function populateInfo(){
-  infoTypeSelect.innerHTML = '<option value="">Select Type</option>';
-  if(!infoData || !infoData.length) return;
-  // Determine first two column keys dynamically
-  const keys = Object.keys(infoData[0]);
-  const colA = keys[0], colB = keys[1] || null;
-  const set = new Set();
-  for(const r of infoData){ if(r[colA]) set.add((r[colA]||"").trim()); }
-  const arr = Array.from(set).sort((a,b)=>a.localeCompare(b));
-  arr.forEach(v=> { const o = document.createElement('option'); o.value=v; o.textContent=v; infoTypeSelect.appendChild(o); });
-
-  infoTypeSelect.onchange = ()=>{
-    const val = infoTypeSelect.value;
-    if(!val){ infoResult.innerHTML = ""; return; }
-    const hits = infoData.filter(r => ((r[colA]||"").trim().toLowerCase() === val.toLowerCase()));
-    if(!hits.length){ infoResult.innerHTML = "<div class='note'>No description found.</div>"; return; }
-    // show column B of all hits joined with blank line, preserve formatting
-    const texts = hits.map(h => (colB ? (h[colB]||"") : "").trim()).filter(Boolean);
-    infoResult.innerHTML = texts.length ? `<div class="prewrap" style="background:rgba(0,0,0,0.12);padding:10px;border-radius:8px;color:#fff">${escapeHtml(texts.join("\n\n"))}</div>` : "<div class='note'>No description available.</div>";
-  };
 }
-
-/* ---------- Card 2: Dynamax Database ---------- */
-const dbGroupSelect = document.getElementById("dbGroupSelect");
-const dbResult = document.getElementById("dbResult");
-document.getElementById("dbReset").addEventListener("click", ()=>{ dbGroupSelect.value=""; dbResult.style.display="none"; dbResult.innerHTML=""; });
-
-function populateDb(){
-  dbGroupSelect.innerHTML = '<option value="">Select Group</option>';
-  if(!dbData || !dbData.length) return;
-  const keys = Object.keys(dbData[0]);
-  const colA = keys[0];
-  const uniq = Array.from(new Set(dbData.map(r=> (r[colA]||"").trim()))).sort((a,b)=>a.localeCompare(b));
-  uniq.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; dbGroupSelect.appendChild(o); });
-
-  dbGroupSelect.onchange = ()=>{
-    const val = dbGroupSelect.value;
-    if(!val){ dbResult.style.display="none"; dbResult.innerHTML=""; return; }
-    const rows = dbData.filter(r => ((r[colA]||"").trim() === val));
-    if(!rows.length){ dbResult.innerHTML = "<div class='note'>No rows found.</div>"; dbResult.style.display="block"; return; }
-    // show columns A..I (or available columns)
-    const cols = Object.keys(rows[0]).slice(0,9);
-    let html = "<table><thead><tr>";
-    cols.forEach(c=> html += `<th>${escapeHtml(c)}</th>`);
-    html += "</tr></thead><tbody>";
-    rows.forEach(r=>{
-      html += "<tr>";
-      cols.forEach(c=>{
-        const cell = r[c] || "";
-        // preserve newlines and dashes using pre-wrap
-        html += `<td class="prewrap">${escapeHtml(cell)}</td>`;
-      });
-      html += "</tr>";
-    });
-    html += "</tbody></table>";
-    dbResult.innerHTML = html;
-    dbResult.style.display = "block";
-  };
-}
-
-/* ---------- Card 3: Type Effectiveness ---------- */
-/* parse typesHeader (array) and typesRows (array of arrays)
-   header: [ "Type","Normal","Fire",... ]  (first column label then defender types)
-   typesRows: [ ["Normal","1","1",...], ["Fighting","2","0.5",...] ] where each row[0] is attack type name
-*/
-
-const raidType1 = document.getElementById("raidType1");
-const raidType2 = document.getElementById("raidType2");
-const findAttackersBtn = document.getElementById("findAttackers");
-const resetRaidBtn = document.getElementById("resetRaid");
-const attackCandidatesDiv = document.getElementById("attackCandidates");
-
-const moveSelects = [document.getElementById("move1"),document.getElementById("move2"),document.getElementById("move3"),document.getElementById("move4")];
-const evaluateVulnBtn = document.getElementById("evaluateVuln");
-const resetMovesBtn = document.getElementById("resetMoves");
-const vulnResultDiv = document.getElementById("vulnResult");
-
-function populateTypeSelects(){
-  // clear first
-  [raidType1,raidType2,...moveSelects].forEach(s=>{
-    if(!s) return;
-    s.innerHTML = '<option value="">(none)</option>';
-  });
-  if(!typesHeader || typesHeader.length < 2) return;
-  // defender type names are header[1..]
-  const defenderTypes = typesHeader.slice(1);
-  defenderTypes.forEach(t=>{
-    // append to raid selects
-    const o1 = document.createElement('option'); o1.value = t; o1.textContent = t;
-    raidType1.appendChild(o1.cloneNode(true));
-    raidType2.appendChild(o1.cloneNode(true));
-    // append to move selects as well (attack types are row[0], but moves are by type too; we'll also add attack type names later)
-    moveSelects.forEach(s => s.appendChild(o1.cloneNode(true)));
-  });
-  // Add attack type names (rows' first col) to move selects as additional options if not present
-  typesRows.forEach(r=>{
-    const atk = (r[0]||"").trim();
-    if(!atk) return;
-    moveSelects.forEach(s=>{
-      // don't duplicate (some types may already be present)
-      if(!Array.from(s.options).some(opt=>opt.value.toLowerCase()===atk.toLowerCase())){
-        const o=document.createElement('option'); o.value=atk; o.textContent=atk;
-        s.appendChild(o);
-      }
+function parseCSV(url){
+  return new Promise((resolve,reject)=>{
+    Papa.parse(url, {
+      download:true,
+      header:true,
+      skipEmptyLines:true,
+      complete: (res)=> {
+        // make sure rows are trimmed keys and values
+        const rows = res.data.map(r=>{
+          const out = {};
+          for(const k in r){
+            const key = (k || '').trim();
+            out[key] = r[k] == null ? '' : String(r[k]);
+          }
+          return out;
+        });
+        resolve({data: rows, fields: res.meta.fields || []});
+      },
+      error: (err)=> reject(err)
     });
   });
 }
 
-/* utility: find defender column index by type name (returns index in header/row; header[0] is label)
-   returns numeric index (0-based) matching typesHeader; for defender columns, it's >=1
-*/
-function defenderColIndex(typeName){
-  if(!typesHeader) return -1;
-  for(let i=1;i<typesHeader.length;i++){
-    if((typesHeader[i]||"").trim().toLowerCase() === (typeName||"").trim().toLowerCase()) return i;
-  }
-  return -1;
+/* Populate filters */
+function uniqueFromColumn(rows, colName){
+  const s = new Set();
+  rows.forEach(r=>{
+    const v = (r[colName] || '').trim();
+    if(v) s.add(v);
+  });
+  return Array.from(s).sort((a,b)=>a.localeCompare(b,'de'));
 }
 
-/* utility: find attack row by attackType name (match row[0]) */
-function findAttackRow(attackType){
-  if(!typesRows) return null;
-  for(const r of typesRows){
-    if(((r[0]||"").trim().toLowerCase()) === (attackType||"").trim().toLowerCase()) return r;
-  }
-  return null;
+function populateSelect(selEl, items, placeholder){
+  selEl.innerHTML = '';
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = placeholder || '-- wählen --';
+  selEl.appendChild(ph);
+  items.forEach(it=>{
+    const o = document.createElement('option');
+    o.value = it;
+    o.textContent = it;
+    selEl.appendChild(o);
+  });
 }
 
-/* compute multiplier of attackRow vs defender types array */
-function computeMultiplierForAttackRow(attackRow, defenderTypes){
-  // attackRow is array; defenderTypes is array of type names (1 or 2)
-  if(!attackRow) return 1;
-  let mult = 1;
-  for(const d of defenderTypes){
-    const col = defenderColIndex(d);
-    if(col < 1) return null; // missing column
-    const cell = (attackRow[col]||"").trim();
-    const num = Number(cell);
-    if(Number.isNaN(num)) return null;
-    mult *= num;
-  }
-  return mult;
+function populateAllFilters(){
+  // Card1 info: column A (type). We try to use the first field as column A.
+  const infoColA = infoFields[0] || Object.keys(infoRows[0] || {})[0] || 'A';
+  const infoItems = uniqueFromColumn(infoRows, infoColA);
+  populateSelect($('infoFilter'), infoItems, '-- wählen --');
+
+  // Card2 db
+  const dbColA = dbFields[0] || Object.keys(dbRows[0] || {})[0] || 'A';
+  const dbItems = uniqueFromColumn(dbRows, dbColA);
+  populateSelect($('dbFilter'), dbItems, '-- wählen --');
+
+  // Card3 move
+  const moveColA = moveFields[0] || Object.keys(moveRows[0] || {})[0] || 'A';
+  const moveItems = uniqueFromColumn(moveRows, moveColA);
+  populateSelect($('moveFilter'), moveItems, '-- wählen --');
+
+  // Card4 Attack: defender selects are columns in header of attack sheet.
+  // Header row (atkFields) lists columns; the first field is likely "Attack" or similar (column A)
+  const headers = atkFields.slice(); // copy
+  // remove first (row label) for defender selection
+  const defenders = headers.slice(1);
+  populateSelect($('atkDef1'), defenders, '-- Verteidiger wählen --');
+  populateSelect($('atkDef2'), defenders, '-- Verteidiger wählen (optional) --');
+
+  // Defense Check: moves correspond to rows of attack sheet (column A)
+  const rowLabel = atkFields[0] || Object.keys(atkRows[0] || {})[0] || 'A';
+  const moveNames = uniqueFromColumn(atkRows, rowLabel);
+  const defs = [ $('def1'), $('def2'), $('def3'), $('def4') ];
+  defs.forEach(s=> populateSelect(s, moveNames, s.id.toUpperCase()));
 }
 
-/* when findAttackers pressed */
-let currentCandidates = []; // list of attack types (strings)
-findAttackersBtn.addEventListener("click", ()=>{
-  attackCandidatesDiv.innerHTML = "";
-  vulnResultDiv.style.display = "none"; vulnResultDiv.innerHTML = "";
-  currentCandidates = [];
+/* Render helpers */
+function renderPreText(s){
+  return `<pre class="preserve">${escapeHtml(s || '')}</pre>`;
+}
 
-  const d1 = raidType1.value;
-  const d2 = raidType2.value;
-  if(!d1 && !d2){ attackCandidatesDiv.textContent = "Select at least one Raid Type (defender)."; return; }
-  const defenders = [];
-  if(d1) defenders.push(d1);
-  if(d2) defenders.push(d2);
-
-  // Loop through each attack row (typesRows). For each, compute per-defender-type cell values and multiplier.
-  const matches = [];
-  for(const r of typesRows){
-    const atkName = (r[0]||"").trim();
-    if(!atkName) continue;
-    // for each defender type, get the cell value
-    let ok = true;
-    let mult = 1;
-    for(const d of defenders){
-      const col = defenderColIndex(d);
-      if(col < 1){ ok = false; break; } // missing defender column
-      const cell = (r[col]||"").trim();
-      const num = Number(cell);
-      if(Number.isNaN(num)){ ok=false; break; }
-      if(num === 0){ ok = false; break; } // if any sub-type is 0 -> negated
-      mult *= num;
-    }
-    if(!ok) continue;
-    // consider it candidate if mult >= 2 (as requested)
-    if(mult >= 2){
-      matches.push({ attack: atkName, multiplier: mult });
-    }
-  }
-
-  if(!matches.length){
-    attackCandidatesDiv.textContent = "No attacker types found that deal >=2× to the selected raid type(s).";
-    currentCandidates = [];
-    return;
-  }
-  // sort by multiplier desc then name
-  matches.sort((a,b)=> b.multiplier - a.multiplier || a.attack.localeCompare(b.attack));
-  currentCandidates = matches.map(m=>m.attack);
-  // show list with multiplier
-  attackCandidatesDiv.innerHTML = "<strong>Candidates:</strong> " + matches.map(m=>`${escapeHtml(m.attack)} (${m.multiplier}×)`).join(", ");
-});
-
-/* Evaluate vulnerability: for each candidate (defender = candidate type), compute multipliers for each selected move type */
-evaluateVulnBtn.addEventListener("click", ()=>{
-  vulnResultDiv.style.display = "none"; vulnResultDiv.innerHTML = "";
-  if(!currentCandidates || !currentCandidates.length){
-    vulnResultDiv.style.display = "block"; vulnResultDiv.innerHTML = "<div class='note'>No candidates — run the 'Find Attackers' step first.</div>";
-    return;
-  }
-  const moves = moveSelects.map(s=>s.value).filter(Boolean);
-  if(!moves.length){
-    vulnResultDiv.style.display = "block"; vulnResultDiv.innerHTML = "<div class='note'>Select at least one move type (attack type) from the Raid movepool.</div>";
-    return;
-  }
-
-  // Build table header: Candidate | move1 | move2 | ... | Max
-  let html = "<table><thead><tr><th>Candidate (as defender)</th>";
-  moves.forEach(m => html += `<th>${escapeHtml(m)}</th>`);
-  html += "<th>Max</th></tr></thead><tbody>";
-
-  for(const cand of currentCandidates){
-    html += `<tr><td>${escapeHtml(cand)}</td>`;
-    let maxv = 0;
-    for(const mv of moves){
-      // find attackRow for move type (attack type)
-      const attackRow = findAttackRow(mv) || findAttackRowByHeaderName(mv); // fallback
-      if(!attackRow){
-        html += `<td>—</td>`;
-        continue;
+function renderTableFromRows(rows, fields, opts = {}){
+  // opts: columns - array of field names to include (defaults to all)
+  const cols = opts.columns || fields;
+  let html = '<div style="overflow:auto"><table><thead><tr>';
+  cols.forEach(c => html += `<th>${escapeHtml(c)}</th>`);
+  html += '</tr></thead><tbody>';
+  rows.forEach(r=>{
+    html += '<tr>';
+    cols.forEach(c=>{
+      let v = r[c] || '';
+      const cls = valueClass(v);
+      // preserve line breaks
+      if(typeof v === 'string' && v.indexOf('\n')!==-1){
+        v = `<pre class="preserve" style="margin:0">${escapeHtml(v)}</pre>`;
+      } else {
+        v = escapeHtml(v);
       }
-      // index of candidate in header
-      const col = defenderColIndex(cand);
-      if(col < 1){ html += `<td>—</td>`; continue; }
-      const val = attackRow[col] || "";
-      const num = Number(val);
-      const display = (val === "") ? "—" : (Number.isNaN(num) ? escapeHtml(val) : num + "×");
-      if(!Number.isNaN(num) && num > maxv) maxv = num;
-      html += `<td>${escapeHtml(display)}</td>`;
-    }
-    html += `<td>${maxv>0? (maxv + "×") : "—"}</td>`;
-    html += "</tr>";
-  }
+      html += `<td class="${cls}">${v}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
 
-  html += "</tbody></table>";
-  vulnResultDiv.innerHTML = html;
-  vulnResultDiv.style.display = "block";
+/* Card 1: Info */
+$('infoShow').addEventListener('click', ()=>{
+  const sel = $('infoFilter').value;
+  if(!sel){ alert('Bitte einen Filter wählen'); return; }
+  const colA = infoFields[0] || Object.keys(infoRows[0] || {})[0];
+  const matches = infoRows.filter(r => (r[colA]||'').trim() === sel);
+  // Show content from Spalte B (field index 1) preserving formatting
+  const colB = infoFields[1] || Object.keys(infoRows[0] || {})[1] || null;
+  if(!colB){
+    $('infoOut').innerHTML = '<p>Spalte B nicht gefunden.</p>';
+    $('infoOut').style.display='block';
+    return;
+  }
+  if(matches.length === 0){
+    $('infoOut').innerHTML = '<p>Keine Einträge.</p>';
+    $('infoOut').style.display='block';
+    return;
+  }
+  // Concatenate all matches (but keep original formatting)
+  let html = '';
+  matches.forEach(m=>{
+    html += `<div style="margin-bottom:8px">${renderPreText(m[colB] || '')}</div>`;
+  });
+  $('infoOut').innerHTML = html;
+  $('infoOut').style.display='block';
+});
+$('infoReset').addEventListener('click', ()=>{
+  $('infoFilter').selectedIndex = 0;
+  $('infoOut').innerHTML = '';
+  $('infoOut').style.display='none';
 });
 
-/* helper: sometimes header includes attack types too; search column headers for an attack-type-like match */
-function findAttackRowByHeaderName(name){
-  // find header index which equals name and then use corresponding row? Not typical. We'll return null.
-  return null;
-}
+/* Card 2: Dynamax Database (show columns B-G) */
+$('dbShow').addEventListener('click', ()=>{
+  const sel = $('dbFilter').value;
+  if(!sel){ alert('Bitte einen Filter wählen'); return; }
+  const colA = dbFields[0] || Object.keys(dbRows[0] || {})[0];
+  const matches = dbRows.filter(r => (r[colA]||'').trim() === sel);
+  if(matches.length === 0){
+    $('dbOut').innerHTML = '<p>Keine Einträge.</p>';
+    $('dbOut').style.display='block';
+    return;
+  }
+  // find columns B-G (fields indices 1..6)
+  const cols = dbFields.slice(1,7);
+  if(cols.length === 0){
+    $('dbOut').innerHTML = '<p>Spalten B-G nicht gefunden.</p>';
+    $('dbOut').style.display='block';
+    return;
+  }
+  $('dbOut').innerHTML = renderTableFromRows(matches, dbFields, {columns: cols});
+  $('dbOut').style.display='block';
+});
+$('dbReset').addEventListener('click', ()=>{
+  $('dbFilter').selectedIndex = 0;
+  $('dbOut').innerHTML = '';
+  $('dbOut').style.display='none';
+});
 
-/* Resets */
-resetRaidBtn.addEventListener("click", ()=>{ raidType1.value=""; raidType2.value=""; attackCandidatesDiv.innerHTML=""; currentCandidates = []; vulnResultDiv.style.display="none"; vulnResultDiv.innerHTML=""; });
-resetMovesBtn.addEventListener("click", ()=>{ moveSelects.forEach(s=> s.value=""); vulnResultDiv.style.display="none"; vulnResultDiv.innerHTML=""; });
+/* Card 3: Dynamax Move (Spalte B shown) */
+$('moveShow').addEventListener('click', ()=>{
+  const sel = $('moveFilter').value;
+  if(!sel){ alert('Bitte einen Filter wählen'); return; }
+  const colA = moveFields[0] || Object.keys(moveRows[0] || {})[0];
+  const matches = moveRows.filter(r => (r[colA]||'').trim() === sel);
+  if(matches.length === 0){
+    $('moveOut').innerHTML = '<p>Keine Einträge.</p>';
+    $('moveOut').style.display='block';
+    return;
+  }
+  const colB = moveFields[1] || Object.keys(moveRows[0] || {})[1] || null;
+  if(!colB){
+    $('moveOut').innerHTML = '<p>Spalte B nicht gefunden.</p>';
+    $('moveOut').style.display='block';
+    return;
+  }
+  let html = '';
+  matches.forEach(m=> html += `<div style="margin-bottom:8px">${renderPreText(m[colB] || '')}</div>`);
+  $('moveOut').innerHTML = html;
+  $('moveOut').style.display='block';
+});
+$('moveReset').addEventListener('click', ()=>{
+  $('moveFilter').selectedIndex = 0;
+  $('moveOut').innerHTML = '';
+  $('moveOut').style.display='none';
+});
 
-/* ---------- helpers ---------- */
-function escapeHtml(s){
-  if(s === null || s === undefined) return "";
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
+/* Card 4: Attack Check logic */
+$('atkShow').addEventListener('click', ()=>{
+  const sel1 = $('atkDef1').value;
+  const sel2 = $('atkDef2').value;
+  if(!sel1 && !sel2){ alert('Bitte mindestens 1 Verteidiger wählen.'); return; }
+  // map defender names to column field names (atkFields)
+  const headers = atkFields.slice();
+  const colMap = {};
+  headers.forEach(h => colMap[h] = h);
+  const defCols = [];
+  if(sel1) defCols.push(sel1);
+  if(sel2 && sel2 !== sel1) defCols.push(sel2);
+  // find column indices
+  const colIdxs = defCols.map(c => headers.indexOf(c)).filter(i=>i>=0);
+  if(colIdxs.length === 0){ $('atkOut').innerHTML = '<p>Spalten nicht gefunden.</p>'; $('atkOut').style.display='block'; return; }
+
+  const rowLabel = headers[0] || Object.keys(atkRows[0] || {})[0];
+  const results = [];
+
+  atkRows.forEach(r=>{
+    // for each attack (row), check values in selected defender columns
+    const vals = defCols.map(c => normalizeValue(r[c] || ''));
+    // criteria:
+    // - if only 1 defender selected: value must be '2'
+    // - if 2 defenders selected: among the two values there must be at least one '2' AND at least one '1'
+    if(defCols.length === 1){
+      if(vals[0] === '2') results.push(r[rowLabel] || '');
+    } else {
+      const has2 = vals.some(v=>v==='2');
+      const has1 = vals.some(v=>v==='1');
+      if(has2 && has1) results.push(r[rowLabel] || '');
+    }
+  });
+
+  if(results.length === 0){
+    $('atkOut').innerHTML = '<p>Keine Treffer.</p>';
+    $('atkOut').style.display='block';
+    return;
+  }
+  // show simple list (column A names)
+  const listHtml = results.map(r => `<div class="badge" style="margin:6px 6px 6px 0;display:inline-block">${escapeHtml(r)}</div>`).join('');
+  $('atkOut').innerHTML = `<div>Gefundene Angriffstypen:</div><div style="margin-top:8px">${listHtml}</div>`;
+  $('atkOut').style.display='block';
+});
+$('atkReset').addEventListener('click',()=>{
+  $('atkDef1').selectedIndex = 0;
+  $('atkDef2').selectedIndex = 0;
+  $('atkOut').innerHTML = '';
+  $('atkOut').style.display='none';
+});
+
+/* Defense Check: show rows A-S for selected rows (moves) */
+$('defShow').addEventListener('click', ()=>{
+  const selNames = [
+    $('def1').value,
+    $('def2').value,
+    $('def3').value,
+    $('def4').value
+  ].filter(x=>x && x.trim());
+  if(selNames.length === 0){ alert('Bitte mindestens eine Auswahl treffen.'); return; }
+
+  const rowLabel = atkFields[0] || Object.keys(atkRows[0] || {})[0]; // column A
+  // find matching rows (case-sensitive or insensitive)
+  const matches = atkRows.filter(r => selNames.includes((r[rowLabel]||'').trim()));
+  if(matches.length === 0){
+    $('defOut').innerHTML = '<p>Keine Zeilen gefunden.</p>';
+    $('defOut').style.display='block';
+    return;
+  }
+  // columns A-S -> first 19 fields (A..S)
+  const cols = atkFields.slice(0,19);
+  // Build table with same header and color-coded cells
+  let html = '<div style="overflow:auto"><table><thead><tr>';
+  cols.forEach(c => html += `<th>${escapeHtml(c)}</th>`);
+  html += '</tr></thead><tbody>';
+  matches.forEach(r=>{
+    html += '<tr>';
+    cols.forEach(c=>{
+      const raw = r[c] || '';
+      const cls = valueClass(raw);
+      // preserve linebreaks if any
+      const content = (typeof raw === 'string' && raw.indexOf('\n') !== -1) ? `<pre class="preserve" style="margin:0">${escapeHtml(raw)}</pre>` : escapeHtml(raw);
+      html += `<td class="${cls}">${content}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  // include locked header note
+  $('defOut').innerHTML = html;
+  $('defOut').style.display='block';
+});
+$('defReset').addEventListener('click', ()=>{
+  ['def1','def2','def3','def4'].forEach(id => $(id).selectedIndex = 0);
+  $('defOut').innerHTML = '';
+  $('defOut').style.display='none';
+});
+
+/* Mode toggle */
+const modeToggle = $('modeToggle');
+function updateToggle(){ modeToggle.textContent = document.body.classList.contains('dark') ? '☀️ Light Mode' : '🌙 Dark Mode'; }
+modeToggle.addEventListener('click', ()=>{ document.body.classList.toggle('dark'); updateToggle(); });
+updateToggle();
+
+/* Init load button */
+$('loadBtn').addEventListener('click', loadAll);
+
+/* Optional: auto-load on page open (commented). Enable if you want immediate load.
+window.addEventListener('load', ()=> {
+  loadAll();
+});
+*/
+
 </script>
 </body>
 </html>
